@@ -25,7 +25,7 @@ public static class Arrays
 
     for (int i = 0; i < length; i++) //Iterate
     {
-        multiples[i] = number * (i + 1);
+        multiples[i] = number * (i + 1); //store
     }
 
     return multiples; // replace this return statement with your own
