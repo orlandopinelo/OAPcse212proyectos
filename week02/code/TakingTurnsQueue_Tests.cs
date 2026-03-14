@@ -32,8 +32,9 @@ public class TakingTurnsQueueTests
             {
                 Assert.Fail("Queue should have ran out of items by now.");
             }
-
+             Console.WriteLine($"Turn {i + 1} | Expected: {expectedResult[i].Name} | Queue: {players.ToString()}");
             var person = players.GetNextPerson();
+            
             Assert.AreEqual(expectedResult[i].Name, person.Name);
             i++;
         }
