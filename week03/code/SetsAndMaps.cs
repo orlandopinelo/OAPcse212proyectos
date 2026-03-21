@@ -21,8 +21,30 @@ public static class SetsAndMaps
     /// <param name="words">An array of 2-character words (lowercase, no duplicates)</param>
     public static string[] FindPairs(string[] words)
     {
-        // TODO Problem 1 - ADD YOUR CODE HERE
-        return [];
+        var seenWords = new HashSet<string>();
+        var results = new List<string>();
+
+        foreach (var word in words)
+        {
+            // Reverse the 2-character word
+            // Since they are always 2 chars, we can just swap indices
+            string reversed = $"{word[1]}{word[0]}";
+
+            // If the reversed version is in our set, it's a symmetric pair
+            // The 'special case' (aa) is naturally handled because the problem 
+            // states there are no duplicates; 'aa' would never find a second 'aa'.
+            if (seenWords.Contains(reversed))
+            {
+                results.Add($"{reversed} & {word}");
+            }
+            else
+            {
+                // Add the current word so its symmetric partner can find it later
+                seenWords.Add(word);
+            }
+        }
+
+        return results.ToArray();
     }
 
     /// <summary>
@@ -39,15 +61,39 @@ public static class SetsAndMaps
     public static Dictionary<string, int> SummarizeDegrees(string filename)
     {
         var degrees = new Dictionary<string, int>();
+
+        // Check if file exists to prevent runtime errors
+        if (!File.Exists(filename))
+        {
+            return degrees;
+        }
+
         foreach (var line in File.ReadLines(filename))
         {
+            // The file is comma-delimited
             var fields = line.Split(",");
-            // TODO Problem 2 - ADD YOUR CODE HERE
+
+            // Ensure the line has enough columns to avoid IndexOutOfRangeException
+            if (fields.Length >= 4)
+            {
+                // Degree information is in the 4th column (index 3)
+                // Use .Trim() to remove any accidental leading/trailing whitespace
+                string degree = fields[3].Trim();
+
+                // Logic to update the frequency map
+                if (degrees.ContainsKey(degree))
+                {
+                    degrees[degree]++;
+                }
+                else
+                {
+                    degrees[degree] = 1;
+                }
+            }
         }
 
         return degrees;
     }
-
     /// <summary>
     /// Determine if 'word1' and 'word2' are anagrams.  An anagram
     /// is when the same letters in a word are re-organized into a 
@@ -65,10 +111,54 @@ public static class SetsAndMaps
     /// using the [] notation.
     /// </summary>
     public static bool IsAnagram(string word1, string word2)
+{
+    // Normalize: Remove spaces and convert to lowercase
+    string s1 = word1.Replace(" ", "").ToLower();
+    string s2 = word2.Replace(" ", "").ToLower();
+
+    // If lengths aren't the same after removing spaces, they can't be anagrams
+    if (s1.Length != s2.Length)
     {
-        // TODO Problem 3 - ADD YOUR CODE HERE
         return false;
     }
+
+    var letterCounts = new Dictionary<char, int>();
+
+    // Count frequencies of letters in the first word
+    foreach (char c in s1)
+    {
+        if (letterCounts.ContainsKey(c))
+            letterCounts[c]++;
+        else
+            letterCounts[c] = 1;
+    }
+
+    // Subtract frequencies using the second word
+    foreach (char c in s2)
+    {
+        // If the letter was never in word1, it's not an anagram
+        if (!letterCounts.ContainsKey(c))
+        {
+            return false;
+        }
+
+        letterCounts[c]--;
+
+        // If we use a letter more times than it appeared in word1, it's not an anagram
+        if (letterCounts[c] < 0)
+        {
+            return false;
+        }
+    }
+
+    // If we made it here, all counts are zero and the words match!
+    return true;
+}
+
+
+
+
+
 
     /// <summary>
     /// This function will read JSON (Javascript Object Notation) data from the 
@@ -84,23 +174,35 @@ public static class SetsAndMaps
     /// https://earthquake.usgs.gov/earthquakes/feed/v1.0/geojson.php
     /// 
     /// </summary>
-    public static string[] EarthquakeDailySummary()
+ 
+
+public static string[] EarthquakeDailySummary()
+{
+    const string uri = "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_day.geojson";
+
+    try
     {
-        const string uri = "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_day.geojson";
         using var client = new HttpClient();
-        using var getRequestMessage = new HttpRequestMessage(HttpMethod.Get, uri);
-        using var jsonStream = client.Send(getRequestMessage).Content.ReadAsStream();
-        using var reader = new StreamReader(jsonStream);
-        var json = reader.ReadToEnd();
+        // Modern .NET: GetStreamAsync is more efficient for large JSON files
+        using var jsonStream = client.GetStreamAsync(uri).Result;
+
         var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+        var featureCollection = JsonSerializer.Deserialize<FeatureCollection>(jsonStream, options);
 
-        var featureCollection = JsonSerializer.Deserialize<FeatureCollection>(json, options);
+        if (featureCollection?.Features == null)
+            return Array.Empty<string>();
 
-        // TODO Problem 5:
-        // 1. Add code in FeatureCollection.cs to describe the JSON using classes and properties 
-        // on those classes so that the call to Deserialize above works properly.
-        // 2. Add code below to create a string out each place a earthquake has happened today and its magitude.
-        // 3. Return an array of these string descriptions.
-        return [];
+        // Transform the Features list into the required string array format
+        return featureCollection.Features
+            .Select(f => $"{f.Properties.Place} - Mag {f.Properties.Mag}")
+            .ToArray();
     }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"Error fetching earthquake data: {ex.Message}");
+        return Array.Empty<string>();
+    }
+}
+
+
 }

@@ -10,8 +10,8 @@
  * 
  * Each row represents the player's stats for a single season with a single team.
  */
-
 using Microsoft.VisualBasic.FileIO;
+using System.Linq; // Required for sorting
 
 public class Basketball
 {
@@ -22,15 +22,44 @@ public class Basketball
         using var reader = new TextFieldParser("basketball.csv");
         reader.TextFieldType = FieldType.Delimited;
         reader.SetDelimiters(",");
-        reader.ReadFields(); // ignore header row
-        while (!reader.EndOfData) {
+        
+        // Skip the header row
+        if (!reader.EndOfData) reader.ReadFields();
+
+        while (!reader.EndOfData)
+        {
             var fields = reader.ReadFields()!;
             var playerId = fields[0];
-            var points = int.Parse(fields[8]);
+            
+            // Handle potential empty or malformed strings in the points column
+            if (int.TryParse(fields[8], out int points))
+            {
+                // If player exists, add to their total; otherwise, create a new entry
+                if (players.ContainsKey(playerId))
+                {
+                    players[playerId] += points;
+                }
+                else
+                {
+                    players[playerId] = points;
+                }
+            }
         }
 
-        Console.WriteLine($"Players: {{{string.Join(", ", players)}}}");
+        // 1. Convert Dictionary to a List/Array
+        // 2. Sort by value (Points) descending
+        // 3. Take the top 10
+        var topTen = players.OrderByDescending(p => p.Value)
+                            .Take(10)
+                            .ToList();
 
-        var topPlayers = new string[10];
+        // Display the results in a table format
+        Console.WriteLine($"{"Player ID",-15} | {"Total Points",-10}");
+        Console.WriteLine(new string('-', 30));
+        
+        foreach (var player in topTen)
+        {
+            Console.WriteLine($"{player.Key,-15} | {player.Value,-10}");
+        }
     }
 }

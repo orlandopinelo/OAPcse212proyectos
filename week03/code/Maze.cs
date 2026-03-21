@@ -1,3 +1,6 @@
+using System;
+using System.Collections.Generic;
+
 /// <summary>
 /// Defines a maze using a dictionary. The dictionary is provided by the
 /// user when the Maze object is created. The dictionary will contain the
@@ -14,17 +17,22 @@
 /// If there is a wall, then throw an InvalidOperationException with the message "Can't go that way!".  If there is no wall,
 /// then the 'currX' and 'currY' values should be changed.
 /// </summary>
+
 public class Maze
 {
-    private readonly Dictionary<ValueTuple<int, int>, bool[]> _mazeMap;
+    private readonly Dictionary<(int, int), bool[]> _mazeMap;
     private int _currX = 1;
     private int _currY = 1;
 
-    public Maze(Dictionary<ValueTuple<int, int>, bool[]> mazeMap)
+    public Maze(Dictionary<(int, int), bool[]> mazeMap)
     {
         _mazeMap = mazeMap;
     }
 
+    public string GetStatus()
+    {
+        return $"Current location (x={_currX}, y={_currY})";
+    }
     // TODO Problem 4 - ADD YOUR CODE HERE
     /// <summary>
     /// Check to see if you can move left.  If you can, then move.  If you
@@ -32,38 +40,49 @@ public class Maze
     /// </summary>
     public void MoveLeft()
     {
-        // FILL IN CODE
+        // Index 0: Left
+        if (CanMove(0)) _currX--;
+        else ThrowWallError();
     }
-
-    /// <summary>
+      /// <summary>
     /// Check to see if you can move right.  If you can, then move.  If you
     /// can't move, throw an InvalidOperationException with the message "Can't go that way!".
     /// </summary>
     public void MoveRight()
     {
-        // FILL IN CODE
+        // Index 1: Right
+        if (CanMove(1)) _currX++;
+        else ThrowWallError();
     }
-
-    /// <summary>
+          /// <summary>
     /// Check to see if you can move up.  If you can, then move.  If you
     /// can't move, throw an InvalidOperationException with the message "Can't go that way!".
     /// </summary>
     public void MoveUp()
     {
-        // FILL IN CODE
+        // Index 2: Up
+        if (CanMove(2)) _currY--;
+        else ThrowWallError();
     }
-
-    /// <summary>
+     /// <summary>
     /// Check to see if you can move down.  If you can, then move.  If you
     /// can't move, throw an InvalidOperationException with the message "Can't go that way!".
     /// </summary>
     public void MoveDown()
     {
-        // FILL IN CODE
+        // Index 3: Down
+        if (CanMove(3)) _currY++;
+        else ThrowWallError();
     }
 
-    public string GetStatus()
+    private bool CanMove(int directionIndex)
     {
-        return $"Current location (x={_currX}, y={_currY})";
+        // Check the boolean array for the current coordinate
+        return _mazeMap[(_currX, _currY)][directionIndex];
+    }
+
+    private void ThrowWallError()
+    {
+        throw new InvalidOperationException("Can't go that way!");
     }
 }
